@@ -1,0 +1,93 @@
+services:
+  coordinator:
+    build: .
+    image: objectstore:latest
+    container_name: coordinator
+    environment:
+      SERVICE_ROLE: coordinator
+      PORT: "8000"
+      DB_PATH: /data/coordinator.db
+      NODE0_URL: http://node0:8100
+      NODE1_URL: http://node1:8101
+      NODE2_URL: http://node2:8102
+    ports:
+      - "8000:8000"
+    volumes:
+      - coord-data:/data
+    depends_on:
+      node0:
+        condition: service_healthy
+      node1:
+        condition: service_healthy
+      node2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status==200 else 1)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+    restart: unless-stopped
+
+  node0:
+    image: objectstore:latest
+    build: .
+    container_name: node0
+    environment:
+      SERVICE_ROLE: node
+      NODE_NAME: node0
+      PORT: "8100"
+      DB_PATH: /data/node.db
+    ports:
+      - "8100:8100"
+    volumes:
+      - node0-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=3).status==200 else 1)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+    restart: unless-stopped
+
+  node1:
+    image: objectstore:latest
+    container_name: node1
+    environment:
+      SERVICE_ROLE: node
+      NODE_NAME: node1
+      PORT: "8100"
+      DB_PATH: /data/node.db
+    ports:
+      - "8101:8100"
+    volumes:
+      - node1-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=3).status==200 else 1)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+    restart: unless-stopped
+
+  node2:
+    image: objectstore:latest
+    container_name: node2
+    environment:
+      SERVICE_ROLE: node
+      NODE_NAME: node2
+      PORT: "8100"
+      DB_PATH: /data/node.db
+    ports:
+      - "8102:8100"
+    volumes:
+      - node2-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=3).status==200 else 1)"]
+      interval: 5s
+      timeout: 4s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  coord-data:
+  node0-data:
+  node1-data:
+  node2-data:
