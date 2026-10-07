@@ -1,0 +1,61 @@
+name: shardstore
+
+services:
+  coordinator:
+    build: .
+    command: uvicorn app.coordinator:app --host 0.0.0.0 --port 8000
+    environment:
+      # 节点顺序即分片序号：node1 存片0，node2 存片1，node3 存片2
+      NODES: http://node1:8000,http://node2:8000,http://node3:8000
+      DB_PATH: /data/coordinator.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - coordinator-data:/data
+    depends_on:
+      - node1
+      - node2
+      - node3
+
+  node1:
+    build: .
+    command: uvicorn app.node:app --host 0.0.0.0 --port 8000
+    environment:
+      NODE_ID: node1
+      DATA_DIR: /data
+      # 演练开关（默认关）：首次存片后全部返回 503
+      DRILL_FAIL_AFTER_FIRST_STORE: "0"
+    ports:
+      - "8001:8000"
+    volumes:
+      - node1-data:/data
+
+  node2:
+    build: .
+    command: uvicorn app.node:app --host 0.0.0.0 --port 8000
+    environment:
+      NODE_ID: node2
+      DATA_DIR: /data
+      DRILL_FAIL_AFTER_FIRST_STORE: "0"
+    ports:
+      - "8002:8000"
+    volumes:
+      - node2-data:/data
+
+  node3:
+    build: .
+    command: uvicorn app.node:app --host 0.0.0.0 --port 8000
+    environment:
+      NODE_ID: node3
+      DATA_DIR: /data
+      DRILL_FAIL_AFTER_FIRST_STORE: "0"
+    ports:
+      - "8003:8000"
+    volumes:
+      - node3-data:/data
+
+volumes:
+  coordinator-data:
+  node1-data:
+  node2-data:
+  node3-data:
